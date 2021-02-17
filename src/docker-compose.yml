@@ -1,0 +1,76 @@
+version: "3.9"
+services:
+    db:
+        image: "mcr.microsoft.com/mssql/server"
+        ports:
+            - 1433:1433
+        environment:
+            SA_PASSWORD: "Your_password123"
+            ACCEPT_EULA: "Y"
+    identity:
+        build: ./IdentityServerAspNetIdentity
+        ports:
+            - "5000:5000"
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ASPNETCORE_URLS=http://+:5000
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
+            - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+            - ConnectionStrings__DefaultConnection= server=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
+            - Cors:https://api:6001,http://api:6001,https://localhost:6001,http://localhost:6001,http://localhost:5003,https://localhost:5003,http://javascriptclient,https://javascriptclient
+        volumes:
+            - ./.certs/https:/https:ro
+        depends_on:
+            - identityseed
+        restart: always
+    identityseed:
+        build: 
+            dockerfile: Dockerfile-Migration
+            context: ./IdentityServerAspNetIdentity
+        environment:
+            - ConnectionStrings__DefaultConnection= server=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
+        depends_on:
+            - db
+    javascriptclient:
+        build: ./JavaScriptClient
+        ports:
+            - "5003:5003"
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ASPNETCORE_URLS=http://+:5003
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
+            - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+        volumes:
+            - ./.certs/https:/https:ro
+        depends_on:
+            - db
+    api:
+        build: ./API
+        ports:
+            - "6001:6001"
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ASPNETCORE_URLS=http://+:6001
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
+            - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+            - Identity:Authority=http://identity:5000
+            - Cors:http://localhost:5003,https://localhost:5003,http://javascriptclient,https://javascriptclient,http://mvc:5002,http://localhost:5002,http://mvc
+        volumes:
+            - ./.certs/https:/https:ro
+        depends_on:
+            - db
+    mvc:
+        build: ./MvcClient
+        ports:
+            - "5002:5002"
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ASPNETCORE_URLS=http://+:5002
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
+            - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+            - Identity:Authority=http://identity:5000
+        volumes:
+            - ./.certs/https:/https:ro
+        depends_on:
+            - db
+
