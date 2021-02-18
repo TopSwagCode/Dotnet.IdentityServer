@@ -1,8 +1,12 @@
 # Dotnet.IdentityServer
 
+<a href="https://docs.microsoft.com/en-us/aspnet/core/?view=aspnetcore-3.1"><img src="assets/aspnetcore.png" height="50px"></a>
+<a href="https://identityserver4.readthedocs.io/en/latest/"><img src="assets/idserver.png" height="50px"></a>
+<a href="https://topswagcode.com/"><img src="assets/topswagcode.png" height="50px"></a>
+
 This project, is showing how to implement authentication with IdentityServer for a range of different scenarios.
 
-![overview.png](overview.png)
+![overview.png](assets/overview.png)
 
 So in this repository you will find 3 Clients using the IdentityServer. AspNetCore MVC client and a Javascript client using code flow, where a user is redirected to the IdentityServer for login, and returned with a code. The code will then be exchanged for a Bearer token, that can be used to call API's as proof you have access to the given resources. Then there is a Dotnet core Console app using client credentials flow. This would be used for background services not running in a context of a user.
 
