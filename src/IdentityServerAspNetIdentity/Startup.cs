@@ -29,7 +29,7 @@ namespace IdentityServerAspNetIdentity
 
         public void ConfigureServices(IServiceCollection services)
         {
-            IdentityModelEventSource.ShowPII = true; //TODO: Remove. Sensitive debug information
+            //IdentityModelEventSource.ShowPII = true; // Better Identity stacktraces and messages. (Insecure)
 
             services.AddControllersWithViews();
 
@@ -85,17 +85,6 @@ namespace IdentityServerAspNetIdentity
                     options.ClientId = "########";
                     options.ClientSecret = "########";
                 });
-
-            services.AddCors(options =>
-            {
-                // this defines a CORS policy called "default"
-                options.AddPolicy("default", policy =>
-                {
-                    policy.WithOrigins(Configuration["Cors"].Split(","))
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                });
-            });
         }
 
         public void Configure(IApplicationBuilder app)
@@ -111,7 +100,7 @@ namespace IdentityServerAspNetIdentity
             app.UseStaticFiles();
 
             app.UseRouting();
-            app.UseCors("default");
+
             app.UseIdentityServer();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>

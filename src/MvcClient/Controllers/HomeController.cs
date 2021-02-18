@@ -49,7 +49,7 @@ namespace MvcClient.Controllers
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var content = await client.GetStringAsync("http://api:6001/identity"); // TODO Add config for api endpoint!
+            var content = await client.GetStringAsync("http://api:6001/identity");
 
             ViewBag.Json = JArray.Parse(content).ToString();
             return View("json");

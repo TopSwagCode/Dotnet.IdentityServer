@@ -37,7 +37,7 @@ namespace MvcClient
                 .AddCookie("Cookies")
                 .AddOpenIdConnect("oidc", options =>
                 {
-                    options.Authority = "http://identity:5000"; // TODO Config
+                    options.Authority = "http://identity:5000";
 
                     options.ClientId = "mvc";
                     options.ClientSecret = "secret";
