@@ -26,7 +26,7 @@ services:
             dockerfile: Dockerfile-Migration
             context: ./IdentityServerAspNetIdentity
         environment:
-            - ConnectionStrings__DefaultConnection= Host=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
+            - ConnectionStrings__DefaultConnection= Host=db;Database=Identity;Port=5432;Username=postgres;Password=Your_password123
         depends_on:
             - db
     javascriptclient:
