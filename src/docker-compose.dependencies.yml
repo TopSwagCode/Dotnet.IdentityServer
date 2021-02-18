@@ -1,17 +1,16 @@
 version: "3.9"
 services:
     db:
-        image: "mcr.microsoft.com/mssql/server"
+        image: "postgres:13.2"
         ports:
-            - 1433:1433
+            - 5432:5432
         environment:
-            SA_PASSWORD: "Your_password123"
-            ACCEPT_EULA: "Y"
+            POSTGRES_PASSWORD: "Your_password123"
     identityseed:
         build: 
             dockerfile: Dockerfile-Migration
             context: ./IdentityServerAspNetIdentity
         environment:
-            - ConnectionStrings__DefaultConnection= server=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
+            - ConnectionStrings__DefaultConnection= Host=db;Database=Identity;Port=5432;Username=postgres;Password=Your_password123
         depends_on:
             - db

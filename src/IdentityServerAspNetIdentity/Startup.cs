@@ -33,7 +33,7 @@ namespace IdentityServerAspNetIdentity
 
             services.AddControllersWithViews();
 
-            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -55,14 +55,14 @@ namespace IdentityServerAspNetIdentity
             .AddConfigurationStore(options =>
             {
                 options.ConfigureDbContext = builder =>
-                    builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+                    builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
             })
             // this adds the operational data from DB (codes, tokens, consents)
             .AddOperationalStore(options =>
             {
                 options.ConfigureDbContext = builder =>
-                    builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+                    builder.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
 
                 // this enables automatic token cleanup. this is optional.
