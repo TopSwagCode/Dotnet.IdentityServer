@@ -12,7 +12,9 @@ using Microsoft.Extensions.Hosting;
 using System.Linq;
 using System.Reflection;
 using IdentityServer4.EntityFramework.Mappers;
-using Microsoft.IdentityModel.Logging;
+using IdentityServerAspNetIdentity.Services;
+using IdentityServer4.Models;
+using IdentityModel;
 
 namespace IdentityServerAspNetIdentity
 {
@@ -49,7 +51,7 @@ namespace IdentityServerAspNetIdentity
 
                 // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
                 options.EmitStaticAudienceClaim = true;
-                options.IssuerUri = "http://identity:5000";
+                options.IssuerUri = "http://localhost:5000";
             })
             // this adds the config data from DB (clients, resources)
             .AddConfigurationStore(options =>
@@ -69,7 +71,8 @@ namespace IdentityServerAspNetIdentity
                 options.EnableTokenCleanup = true;
                 options.TokenCleanupInterval = 30;
             })
-            .AddAspNetIdentity<ApplicationUser>();
+            .AddAspNetIdentity<ApplicationUser>()
+            .AddProfileService<ProfileService>();
 
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
@@ -157,6 +160,14 @@ namespace IdentityServerAspNetIdentity
                 }
                 */
             }
+        }
+    }
+
+    public sealed class ProfileWithIdentityResource : IdentityResources.Profile
+    {
+        public ProfileWithIdentityResource()
+        {
+            this.UserClaims.Add(JwtClaimTypes.Role);
         }
     }
 }
