@@ -19,7 +19,7 @@ If you want single signon to work across clients add identity to hosts file on w
 eg:
 127.0.0.1 Identity
 
-If you want javascript client to work without, simply change the URL from identity:6000 to localhost:6000
+If you don't want to use host mappings, just change all places where identity:5000 to localhost:5000.
 
 run docker-compose up to start the project
 
@@ -40,16 +40,7 @@ You can add Google auth by creating your own google app account and inserting th
 
 This is a work in progress project :) Handle with care. Alot of hardcoded IP's still in place to be fixed. Below are some of the stuff I am looking at doing in the near future and some of them have already been fixed / implemented.
 
-# TODO
-
-* Adding More API's
-* Adding API Scope handling /Have 2 API's that only work for certain clients. Eg Admin API, Client API.
-* Share links to all resources (Ongoing)
-* Add roles, and other security stuff for admin users, normal users
-* Cleanup in design and make it look like 1 product
-* Add user signup
-* Add Admin pages
-* Create new Youtube video for repository
+# Links
 
 https://docs.microsoft.com/en-us/aspnet/core/security/docker-compose-https?view=aspnetcore-5.0
 
@@ -65,18 +56,4 @@ https://hub.docker.com/_/microsoft-mssql-server
 
 https://hub.docker.com/_/postgres
 
-docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=Your_password123' -e 'MSSQL_PID=Express' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2017-latest-ubuntu
-
 https://docs.docker.com/compose/aspnet-mssql-compose/
-
-
-// TODO
-// adds an authorization policy to make sure the token is for scope 'api1'
-services.AddAuthorization(options =>
-{
-    options.AddPolicy("ApiScope", policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.RequireClaim("scope", "api1");
-    });
-});
