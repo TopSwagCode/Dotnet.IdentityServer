@@ -14,6 +14,7 @@ function log() {
 
 document.getElementById("login").addEventListener("click", login, false);
 document.getElementById("api").addEventListener("click", api, false);
+document.getElementById("apiAdmin").addEventListener("click", apiAdmin, false);
 document.getElementById("logout").addEventListener("click", logout, false);
 
 var config = {
@@ -42,6 +43,20 @@ function login() {
 function api() {
     mgr.getUser().then(function (user) {
         var url = "http://localhost:6001/identity";
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url);
+        xhr.onload = function () {
+            log(xhr.status, JSON.parse(xhr.responseText));
+        }
+        xhr.setRequestHeader("Authorization", "Bearer " + user.access_token);
+        xhr.send();
+    });
+}
+
+function apiAdmin() {
+    mgr.getUser().then(function (user) {
+        var url = "http://localhost:6001/identity/admin";
 
         var xhr = new XMLHttpRequest();
         xhr.open("GET", url);
