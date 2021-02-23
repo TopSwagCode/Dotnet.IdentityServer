@@ -35,6 +35,27 @@ namespace IdentityServerAspNetIdentity
                     var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
                     context.Database.Migrate();
 
+                    var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                    var member = roleMgr.FindByNameAsync("member").Result;
+                    if (member == null)
+                    {
+                        member = new IdentityRole
+                        {
+                            Name = "member"
+                        };
+                        _ = roleMgr.CreateAsync(member).Result;
+                    }
+
+                    var admin = roleMgr.FindByNameAsync("admin").Result;
+                    if (admin == null)
+                    {
+                        admin = new IdentityRole
+                        {
+                            Name = "admin"
+                        };
+                        _ = roleMgr.CreateAsync(admin).Result;
+                    }
+
                     var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                     var alice = userMgr.FindByNameAsync("alice").Result;
                     if (alice == null)
@@ -60,6 +81,15 @@ namespace IdentityServerAspNetIdentity
                         if (!result.Succeeded)
                         {
                             throw new Exception(result.Errors.First().Description);
+                        }
+
+                        if (!userMgr.IsInRoleAsync(alice, member.Name).Result)
+                        {
+                            _ = userMgr.AddToRoleAsync(alice, member.Name).Result;
+                        }
+                        if (!userMgr.IsInRoleAsync(alice, admin.Name).Result)
+                        {
+                            _ = userMgr.AddToRoleAsync(alice, admin.Name).Result;
                         }
                         Log.Debug("alice created");
                     }
@@ -94,6 +124,12 @@ namespace IdentityServerAspNetIdentity
                         {
                             throw new Exception(result.Errors.First().Description);
                         }
+
+                        if (!userMgr.IsInRoleAsync(bob, member.Name).Result)
+                        {
+                            _ = userMgr.AddToRoleAsync(bob, member.Name).Result;
+                        }
+
                         Log.Debug("bob created");
                     }
                     else
