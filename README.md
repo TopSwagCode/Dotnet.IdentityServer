@@ -38,7 +38,7 @@ username "alice" and "bob" with password: Pass123$
 
 You can add Google auth by creating your own google app account and inserting the secrets here. Remember to setup the redirect urls in your google app. They are able to redirect to localhost etc. for local development.
 
-This is a work in progress project :) Handle with care. Alot of hardcoded IP's still in place to be fixed. Below are some of the stuff I am looking at doing in the near future and some of them have already been fixed / implemented.
+This is a work in progress project :) Handle with care. Alot of hardcoded IP's still in place to be fixed.
 
 # Links
 
