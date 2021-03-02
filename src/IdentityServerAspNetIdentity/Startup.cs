@@ -15,6 +15,8 @@ using IdentityServer4.EntityFramework.Mappers;
 using IdentityServerAspNetIdentity.Services;
 using IdentityServer4.Models;
 using IdentityModel;
+using Microsoft.IdentityModel.Tokens;
+using System;
 
 namespace IdentityServerAspNetIdentity
 {
@@ -74,8 +76,16 @@ namespace IdentityServerAspNetIdentity
             .AddAspNetIdentity<ApplicationUser>()
             .AddProfileService<ProfileService>();
 
-            // not recommended for production - you need to store your key material somewhere secure
-            builder.AddDeveloperSigningCredential();
+            if (Environment.IsDevelopment())
+            {
+                builder.AddDeveloperSigningCredential();
+            }
+            else
+            {
+                var rsa = new RsaKeyService(Environment, TimeSpan.FromDays(30));
+                services.AddTransient<RsaKeyService>(provider => rsa);
+                builder.AddSigningCredential(rsa.GetKey(), IdentityServerConstants.RsaSigningAlgorithm.RS512);
+            }
 
             services.AddAuthentication()
                 .AddGoogle(options =>
