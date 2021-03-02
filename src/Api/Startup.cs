@@ -37,6 +37,7 @@ namespace Api
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api", Version = "v1" });
             });
+            
             services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
             {
