@@ -9,12 +9,14 @@ using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
+using IdentityServerAspNetIdentity.Data;
 using IdentityServerAspNetIdentity.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,6 +33,7 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
+        private readonly ApplicationDbContext _dbContext;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -38,7 +41,8 @@ namespace IdentityServerHost.Quickstart.UI
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
-            IEventService events)
+            IEventService events,
+            ApplicationDbContext dbContext)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -46,6 +50,106 @@ namespace IdentityServerHost.Quickstart.UI
             _clientStore = clientStore;
             _schemeProvider = schemeProvider;
             _events = events;
+            _dbContext = dbContext;
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> CreateUser(string email, Guid? emailValidationToken)
+        {
+
+            var createUserViewModel = new CreateUserViewModel
+            {
+                Email = email,
+                Username = email,
+                EmailValidationToken = emailValidationToken == new Guid() ? null : emailValidationToken,
+                Password = "",
+                PasswordRepeat = ""
+            };
+
+            return View(createUserViewModel);
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateUser(CreateUserInputModel model)
+        {
+            /*
+             * Validate user and sign them in!
+             */
+
+            throw new NotImplementedException("TODO");
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Signup()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Handle postback from username/password login
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Signup(SignupInputModel model)
+        {
+            /*
+             * Create Validation token and save email and token in database
+             * Redirect user to wait for validation email input page
+             * Perhaps some expire date / time, so a new request would be sent if a user asks again next day or so
+             * User comes back and signs uses token with all information
+             * Create a user and signin imediatly
+             */
+            // TODO Propper Validate email and show errors
+
+            if (!IsValidEmail(model.Email))
+            {
+                throw new Exception("Invalid email. This should be handled!");
+            }
+
+            // Check if existing Token for email exists that is not expired before creating new
+            // If problem with many requests remove old requests in future, or move to history table
+
+            UserSignupRequest userSignupRequest = new UserSignupRequest
+            {
+                Email = model.Email,
+                EmailValidationToken = Guid.NewGuid(),
+                IsEmailValidationTokenUsed = false,
+                ExpireOnUtc = DateTimeOffset.UtcNow.AddDays(1)
+            };
+
+            _dbContext.UserSignupRequests.Add(userSignupRequest);
+
+            await _dbContext.SaveChangesAsync();
+
+            var createUserViewModel = new CreateUserViewModel
+            {
+                Email = model.Email
+            };
+
+            return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={((new Guid()).ToString())}");
+        }
+
+        bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -76,8 +180,13 @@ namespace IdentityServerHost.Quickstart.UI
             // check if we are in the context of an authorization request
             var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
 
-            // the user clicked the "cancel" button
-            if (button != "login")
+            if (string.Equals(button, "signup", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return Redirect("~/account/signup");
+            }
+
+                // the user clicked the "cancel" button
+            if (string.Equals(button, "cancel", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (context != null)
                 {
