@@ -21,6 +21,24 @@ namespace IdentityServerHost.Quickstart.UI
     {
         [Required]
         public string Email { get; set; }
+        public string Base64ReturnUrl { get; set; }
+    }
+
+    public class SignupViewModel : SignupInputModel
+    {
+        
+    }
+
+    public class ForgotPasswordInputModel
+    {
+        [Required]
+        public string Email { get; set; }
+        public string Base64ReturnUrl { get; set; }
+    }
+
+    public class ForgotPasswordViewModel : ForgotPasswordInputModel
+    {
+
     }
 
     public class CreateUserInputModel
@@ -34,6 +52,7 @@ namespace IdentityServerHost.Quickstart.UI
         [Required]
         public string Email { get; set; }
         public Guid? EmailValidationToken { get; set; }
+        public string Base64ReturnUrl { get; set; }
     }
 
     public class CreateUserViewModel : CreateUserInputModel

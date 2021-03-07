@@ -7,7 +7,14 @@
 <body>
     <script src="oidc-client.js"></script>
     <script>
+
+            console.log(window.location.href)
+            console.log()
+            console.log(window.location)
         new Oidc.UserManager({ response_mode: "query" }).signinRedirectCallback().then(function () {
+            console.log(window.location.href)
+            console.log()
+            console.log(window.location)
             window.location = "index.html";
         }).catch(function (e) {
             console.error(e);

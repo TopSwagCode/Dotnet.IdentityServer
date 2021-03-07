@@ -1,4 +1,4 @@
-@model SignupInputModel
+@model SignupViewModel
 
 <div class="login-page">
     <div class="lead">
@@ -23,6 +23,7 @@
                     <form asp-route="Signup">
 
                         <div class="form-group">
+                            <input type="hidden" asp-for="Base64ReturnUrl">
                             <label asp-for="Email"></label>
                             <input class="form-control" placeholder="Email" asp-for="Email" autofocus>
                         </div>

@@ -35,6 +35,8 @@ namespace IdentityServerAspNetIdentity
         {
             //IdentityModelEventSource.ShowPII = true; // Better Identity stacktraces and messages. (Insecure)
 
+            services.AddTransient<EmailService>();
+
             services.AddControllersWithViews();
 
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));

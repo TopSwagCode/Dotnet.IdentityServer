@@ -11,12 +11,14 @@ using IdentityServer4.Services;
 using IdentityServer4.Stores;
 using IdentityServerAspNetIdentity.Data;
 using IdentityServerAspNetIdentity.Models;
+using IdentityServerAspNetIdentity.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -34,6 +36,7 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
         private readonly ApplicationDbContext _dbContext;
+        private readonly EmailService _emailService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -42,7 +45,8 @@ namespace IdentityServerHost.Quickstart.UI
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext,
+            EmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -51,13 +55,14 @@ namespace IdentityServerHost.Quickstart.UI
             _schemeProvider = schemeProvider;
             _events = events;
             _dbContext = dbContext;
+            _emailService = emailService;
         }
 
         /// <summary>
         /// Entry point into the signup workflow
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> CreateUser(string email, Guid? emailValidationToken)
+        public async Task<IActionResult> CreateUser(string email, Guid? emailValidationToken, string base64ReturnUrl)
         {
 
             var createUserViewModel = new CreateUserViewModel
@@ -66,7 +71,8 @@ namespace IdentityServerHost.Quickstart.UI
                 Username = email,
                 EmailValidationToken = emailValidationToken == new Guid() ? null : emailValidationToken,
                 Password = "",
-                PasswordRepeat = ""
+                PasswordRepeat = "",
+                Base64ReturnUrl = base64ReturnUrl
             };
 
             return View(createUserViewModel);
@@ -79,22 +85,70 @@ namespace IdentityServerHost.Quickstart.UI
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(CreateUserInputModel model)
         {
-            /*
-             * Validate user and sign them in!
-             */
+            var userSignupRequest = await _dbContext.UserSignupRequests.SingleOrDefaultAsync(x => x.EmailValidationToken == model.EmailValidationToken && x.Email == model.Email && x.IsEmailValidationTokenUsed == false);
 
-            throw new NotImplementedException("TODO");
+            if(userSignupRequest == null)
+            {
+                throw new NotImplementedException("Could not find UserSignupRequest for given token / email"); // Handle this!
+            }
+            
+            if (!string.Equals(model.Password, model.PasswordRepeat))
+            {
+                throw new NotImplementedException("Passwords did not match!"); // Handle this!
+            }
+
+            var user = new ApplicationUser
+            {
+                Email = model.Email,
+                UserName = model.Username,
+                EmailConfirmed = true,
+            };
+
+            var createUserResult = await _userManager.CreateAsync(user, model.Password);
+
+            if (!createUserResult.Succeeded)
+            {
+                throw new NotImplementedException($"Failed to create new user! Errors: [ { string.Join(" - ",createUserResult.Errors.Select(x => $"Code: {x.Code}, Description: {x.Description}").ToList()) } ]"); // Handle this!
+            }
+            var rememberLogin = true; // TODO: Ask user if they actually wants to be remembered
+
+            // TODO Add Member role here, so we know it is a signup member and perhaps also other claims
+
+            var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, rememberLogin, lockoutOnFailure: true);
+            if (createUserResult.Succeeded)
+            {
+                await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName)); // TODO Add clientid context and add return url, so user is returned to the app they tried to access!
+
+                userSignupRequest.IsEmailValidationTokenUsed = true;
+                await _dbContext.SaveChangesAsync();
+
+                return Redirect(Base64Decode(model.Base64ReturnUrl)); // Perhaps use client context to check if native how to resolve redirect!
+            }
+            else
+            {
+                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials")); // TODO Add clientid context and add return url, so user is returned to the app they tried to access!
+                ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+            }
+            
+
+            throw new NotImplementedException("Handle failed login attempt and what to do!");
         }
 
         /// <summary>
         /// Entry point into the signup workflow
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Signup()
+        public async Task<IActionResult> Signup(string base64ReturnUrl)
         {
-            return View();
+            var signupViewModel = new SignupViewModel
+            {
+                Base64ReturnUrl = base64ReturnUrl
+            };
+
+            return View(signupViewModel);
         }
 
+        
         /// <summary>
         /// Handle postback from username/password login
         /// </summary>
@@ -102,14 +156,8 @@ namespace IdentityServerHost.Quickstart.UI
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Signup(SignupInputModel model)
         {
-            /*
-             * Create Validation token and save email and token in database
-             * Redirect user to wait for validation email input page
-             * Perhaps some expire date / time, so a new request would be sent if a user asks again next day or so
-             * User comes back and signs uses token with all information
-             * Create a user and signin imediatly
-             */
             // TODO Propper Validate email and show errors
+            // TODO Save redirect url for Create User Workflow, so User can be returned to the app they tried to access! This is a must if several apps accesses the same user signup flow! For now hardcoded for javascript client
 
             if (!IsValidEmail(model.Email))
             {
@@ -119,27 +167,68 @@ namespace IdentityServerHost.Quickstart.UI
             // Check if existing Token for email exists that is not expired before creating new
             // If problem with many requests remove old requests in future, or move to history table
 
+            //var token = await _userManager.GenerateEmailConfirmationTokenAsync(); We could use built in logic
+            // But I don't want users that never completes the flow in the database. I have no right to keep emails of none active users!
+
             UserSignupRequest userSignupRequest = new UserSignupRequest
             {
                 Email = model.Email,
                 EmailValidationToken = Guid.NewGuid(),
                 IsEmailValidationTokenUsed = false,
                 ExpireOnUtc = DateTimeOffset.UtcNow.AddDays(1)
+                //Base64ReturnUrl = model.Base64ReturnUrl <-- TODO: Save url in database, so when use clicks link in mail, he get's redirected to page he was visiting
             };
 
             _dbContext.UserSignupRequests.Add(userSignupRequest);
 
+            // Send email with EmailValidationToken
+
             await _dbContext.SaveChangesAsync();
 
-            var createUserViewModel = new CreateUserViewModel
-            {
-                Email = model.Email
-            };
+            await _emailService.SendSignupEmail(model.Email, userSignupRequest.EmailValidationToken, model.Base64ReturnUrl);
 
-            return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={((new Guid()).ToString())}");
+            return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={((new Guid()).ToString())}&base64ReturnUrl={model.Base64ReturnUrl}");
         }
 
-        bool IsValidEmail(string email)
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ForgotPassword(string base64ReturnUrl)
+        {
+            var forgotPasswordViewModel = new ForgotPasswordViewModel
+            {
+                Base64ReturnUrl = base64ReturnUrl
+            };
+
+            return View(forgotPasswordViewModel);
+        }
+
+        /// <summary>
+        /// Handle postback from username/password login
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordInputModel model)
+        {
+            // Look at token providers https://code-maze.com/password-reset-aspnet-core-identity/
+
+            throw new NotImplementedException("Not implemented");
+        }
+
+        public static string Base64Encode(string plainText) // Cleanup
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
+        }
+
+        public static string Base64Decode(string base64EncodedData) // Cleanup
+        {
+            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+        }
+
+        bool IsValidEmail(string email) // Move to helper or Exstension method?
         {
             try
             {
@@ -182,10 +271,15 @@ namespace IdentityServerHost.Quickstart.UI
 
             if (string.Equals(button, "signup", StringComparison.InvariantCultureIgnoreCase))
             {
-                return Redirect("~/account/signup");
+                return Redirect($"~/account/signup?base64ReturnUrl={Base64Encode(model.ReturnUrl)}");
             }
 
-                // the user clicked the "cancel" button
+            if (string.Equals(button, "forgotpassword", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return Redirect($"~/account/forgotpassword?base64ReturnUrl={Base64Encode(model.ReturnUrl)}");
+            }
+
+            // the user clicked the "cancel" button
             if (string.Equals(button, "cancel", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (context != null)
