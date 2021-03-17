@@ -17,6 +17,7 @@ using IdentityServer4.Models;
 using IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using SendGrid.Extensions.DependencyInjection;
 
 namespace IdentityServerAspNetIdentity
 {
@@ -35,7 +36,12 @@ namespace IdentityServerAspNetIdentity
         {
             //IdentityModelEventSource.ShowPII = true; // Better Identity stacktraces and messages. (Insecure)
 
-            services.AddTransient<EmailService>();
+            services.AddSendGrid(options => // Use whatever email provider you want to. I use SendGrid, because it has a basic free plan to get started with.
+            {
+                options.ApiKey = ""; // TODO: Use appsettings
+            });
+
+            services.AddTransient<IEmailService, EmailService>();
 
             services.AddControllersWithViews();
 
@@ -126,42 +132,42 @@ namespace IdentityServerAspNetIdentity
 
         private void InitializeDatabase(IApplicationBuilder app)
         {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            using var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+
+            serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+
+            var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+            context.Database.Migrate();
+
+            // Add last db and migrate all same place???
+            if (!context.Clients.Any())
             {
-                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
-
-                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
-                context.Database.Migrate();
-
-                // Add last db and migrate all same place???
-                if (!context.Clients.Any())
+                foreach (var client in Config.Clients)
                 {
-                    foreach (var client in Config.Clients)
-                    {
-                        context.Clients.Add(client.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.Clients.Add(client.ToEntity());
                 }
+                context.SaveChanges();
+            }
 
-                if (!context.IdentityResources.Any())
+            if (!context.IdentityResources.Any())
+            {
+                foreach (var resource in Config.IdentityResources)
                 {
-                    foreach (var resource in Config.IdentityResources)
-                    {
-                        context.IdentityResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.IdentityResources.Add(resource.ToEntity());
                 }
+                context.SaveChanges();
+            }
 
-                if (!context.ApiScopes.Any())
+            if (!context.ApiScopes.Any())
+            {
+                foreach (var resource in Config.ApiScopes)
                 {
-                    foreach (var resource in Config.ApiScopes)
-                    {
-                        context.ApiScopes.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.ApiScopes.Add(resource.ToEntity());
                 }
+                context.SaveChanges();
+            }
 
-                /*
+            /*
                 if (!context.ApiResources.Any())
                 {
                     foreach (var resource in Config.ApiScopes)
@@ -171,7 +177,6 @@ namespace IdentityServerAspNetIdentity
                     context.SaveChanges();
                 }
                 */
-            }
         }
     }
 

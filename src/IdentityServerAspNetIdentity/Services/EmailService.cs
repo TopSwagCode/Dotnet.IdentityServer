@@ -4,37 +4,55 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace IdentityServerAspNetIdentity.Services
 {
-    public class EmailService
+    public class EmailTemplate
     {
-        public async Task sendemail()
+
+        public static (string plainTextContent, string htmlContent) ResetPassword(string token, string callback) =>
+            (
+                $"Here is your reset password token: {token}",
+                $"<strong>Here is your validation token link: <a href='{callback}'>Helloooo</a><br/> Here is your token if you can't press the link: {token}</strong>"
+            );
+
+        public static (string plainTextContent, string htmlContent) Signup(string token, string callback) =>
+        (
+            $"Here is your validation token: {token}",
+            $"<strong>Here is your validation token link: <a href='{callback}'>Helloooo</a><br/> Here is your token if you can't press the link: {token}</strong>"
+        );
+    }
+
+    public interface IEmailService
+    {
+        Task SendEmailAsync(string email, string subject, string plainTextContent, string htmlContent);
+    }
+
+    public class EmailService : IEmailService
+    {
+        private readonly SendGridClient _sendGridClient;
+        private readonly ILogger<EmailService> _logger;
+
+        public EmailService(SendGridClient sendGridClient, ILogger<EmailService> logger)
         {
-            var apiKey = "######";
-            var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("joshua@help-motivate.me", "Joshua Ryder");
-            var subject = "Sending with Twilio SendGrid is Fun";
-            var to = new EmailAddress("josh@topswagcode.com", "Joshua Jesper Krægpøth Ryder");
-            var plainTextContent = "and easy to do anywhere, even with C#";
-            var htmlContent = "<strong>and easy to do anywhere, even with C#</strong>";
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+            _sendGridClient = sendGridClient;
+            _logger = logger;
         }
 
-        public async Task SendSignupEmail(string email, Guid emailValidationToken, string base64ReturnUrl)
+        public async Task SendEmailAsync(string email, string subject, string plainTextContent, string htmlContent)
         {
-            var apiKey = "#######";
-            var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("joshua@help-motivate.me", "Signup Help-Motivate.me");
-            var subject = "Signup validation for Help-Motivate.me";
-            var to = new EmailAddress(email, "Joshua Jesper Krægpøth Ryder");
-            
-            var plainTextContent = $"Here is your validation token: {emailValidationToken}";
-            var htmlContent = $"<strong>Here is your validation token link: <a href='http://localhost:5000/account/createuser?email={email}&emailValidationToken={emailValidationToken.ToString()}&base64ReturnUrl={base64ReturnUrl}'>Helloooo</a><br/> Here is your token if you can't press the link: {emailValidationToken}</strong>";
-            
+            var from = new EmailAddress("joshua@help-motivate.me", "Help-Motivate.Me");
+            var to = new EmailAddress("email", email);
+
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-            var response = await client.SendEmailAsync(msg).ConfigureAwait(false); // Handle this for retry
+            var response = await _sendGridClient.SendEmailAsync(msg);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError($"Failed to send email with StatusCode: {response.StatusCode}");
+                // We could add some retry logic here if we wanted to.
+            }
         }
     }
 

@@ -62,7 +62,7 @@ namespace IdentityServerHost.Quickstart.UI
         /// Entry point into the signup workflow
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> CreateUser(string email, Guid? emailValidationToken, string base64ReturnUrl)
+        public IActionResult CreateUser(string email, Guid? emailValidationToken, string base64ReturnUrl)
         {
 
             var createUserViewModel = new CreateUserViewModel
@@ -108,6 +108,7 @@ namespace IdentityServerHost.Quickstart.UI
 
             if (!createUserResult.Succeeded)
             {
+                // TODO: Handle this nicely
                 throw new NotImplementedException($"Failed to create new user! Errors: [ { string.Join(" - ",createUserResult.Errors.Select(x => $"Code: {x.Code}, Description: {x.Description}").ToList()) } ]"); // Handle this!
             }
             var rememberLogin = true; // TODO: Ask user if they actually wants to be remembered
@@ -131,14 +132,14 @@ namespace IdentityServerHost.Quickstart.UI
             }
             
 
-            throw new NotImplementedException("Handle failed login attempt and what to do!");
+            throw new NotImplementedException("TODO: Handle failed login attempt and what to do!");
         }
 
         /// <summary>
         /// Entry point into the signup workflow
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Signup(string base64ReturnUrl)
+        public IActionResult Signup(string base64ReturnUrl)
         {
             var signupViewModel = new SignupViewModel
             {
@@ -158,50 +159,59 @@ namespace IdentityServerHost.Quickstart.UI
         {
             // TODO Propper Validate email and show errors
             // TODO Save redirect url for Create User Workflow, so User can be returned to the app they tried to access! This is a must if several apps accesses the same user signup flow! For now hardcoded for javascript client
+            var signupViewModel = new SignupViewModel
+            {
+                Base64ReturnUrl = model.Base64ReturnUrl
+            };
 
             if (!IsValidEmail(model.Email))
             {
-                throw new Exception("Invalid email. This should be handled!");
+                ModelState.AddModelError(string.Empty, "Please ohhh please enter a valid email. We wont spam it :) ");
+                return View(signupViewModel);
             }
 
-            // Check if existing Token for email exists that is not expired before creating new
-            // If problem with many requests remove old requests in future, or move to history table
+            var existingUsers = await _dbContext.Users.Where(x => x.Email == model.Email).ToListAsync();
 
-            //var token = await _userManager.GenerateEmailConfirmationTokenAsync(); We could use built in logic
-            // But I don't want users that never completes the flow in the database. I have no right to keep emails of none active users!
-
-            UserSignupRequest userSignupRequest = new UserSignupRequest
+            // There can be several users with same email, because user can signup and login using google
+            if (existingUsers.Any())
             {
-                Email = model.Email,
-                EmailValidationToken = Guid.NewGuid(),
-                IsEmailValidationTokenUsed = false,
-                ExpireOnUtc = DateTimeOffset.UtcNow.AddDays(1)
-                //Base64ReturnUrl = model.Base64ReturnUrl <-- TODO: Save url in database, so when use clicks link in mail, he get's redirected to page he was visiting
-            };
+                ModelState.AddModelError(string.Empty, "User already exists with that email. Please login or recover password");
+                return View(signupViewModel);
+            }
 
-            _dbContext.UserSignupRequests.Add(userSignupRequest);
+            var userSignupRequest = await _dbContext.UserSignupRequests.SingleOrDefaultAsync(x => x.Email == model.Email);
 
-            // Send email with EmailValidationToken
+            // Dont create new if we already have, but still send new email.
+            if (userSignupRequest == null)
+            {
+                userSignupRequest = new UserSignupRequest
+                {
+                    Email = model.Email,
+                    EmailValidationToken = Guid.NewGuid(),
+                    IsEmailValidationTokenUsed = false,
+                    ExpireOnUtc = DateTimeOffset.UtcNow.AddDays(1)
+                    //Base64ReturnUrl = model.Base64ReturnUrl <-- TODO: Save url in database, so when use clicks link in mail, he get's redirected to page he was visiting
+                };
 
-            await _dbContext.SaveChangesAsync();
+                _dbContext.UserSignupRequests.Add(userSignupRequest);
 
-            await _emailService.SendSignupEmail(model.Email, userSignupRequest.EmailValidationToken, model.Base64ReturnUrl);
+                await _dbContext.SaveChangesAsync();
+            }
 
-            return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={((new Guid()).ToString())}&base64ReturnUrl={model.Base64ReturnUrl}");
+            // http://localhost:5000/account/createuser?email={email}&emailValidationToken={emailValidationToken.ToString()}&base64ReturnUrl={base64ReturnUrl}
+            var callback = Url.Action(nameof(CreateUser), "Account", new { email = model.Email, emailValidationToken = userSignupRequest.EmailValidationToken.ToString(), base64ReturnUrl = model.Base64ReturnUrl }, Request.Scheme);
+
+            var (plainTextContent, htmlContent) = EmailTemplate.Signup(userSignupRequest.EmailValidationToken.ToString(), callback);
+
+            await _emailService.SendEmailAsync(model.Email, "Help-Motivate.Me Signup", plainTextContent, htmlContent);
+
+            return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={new Guid()}&base64ReturnUrl={model.Base64ReturnUrl}");
         }
 
-        /// <summary>
-        /// Entry point into the signup workflow
-        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> ForgotPassword(string base64ReturnUrl)
+        public IActionResult ForgotPassword()
         {
-            var forgotPasswordViewModel = new ForgotPasswordViewModel
-            {
-                Base64ReturnUrl = base64ReturnUrl
-            };
-
-            return View(forgotPasswordViewModel);
+            return View();
         }
 
         /// <summary>
@@ -213,7 +223,69 @@ namespace IdentityServerHost.Quickstart.UI
         {
             // Look at token providers https://code-maze.com/password-reset-aspnet-core-identity/
 
-            throw new NotImplementedException("Not implemented");
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+            {
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+            }
+                
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var callback = Url.Action(nameof(ResetPassword), "Account", new { token, email = user.Email }, Request.Scheme);
+
+            var (plainTextContent, htmlContent) = EmailTemplate.ResetPassword(token, callback);
+
+            await _emailService.SendEmailAsync(model.Email,"Reset password Help-Motivate.Me", plainTextContent, htmlContent);
+
+            return RedirectToAction(nameof(ForgotPasswordConfirmation));
+        }
+
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string token, string email)
+        {
+            var model = new ResetPasswordModela { Token = token, Email = email };
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordModela resetPasswordModel)
+        {
+            if (!string.Equals(resetPasswordModel.Password, resetPasswordModel.ConfirmPassword, StringComparison.InvariantCulture))
+            {
+                ModelState.AddModelError(string.Empty, "Passwords does not match");
+            }
+
+            if (!ModelState.IsValid)
+                return View(resetPasswordModel);
+            var user = await _userManager.FindByEmailAsync(resetPasswordModel.Email);
+            if (user == null)
+                RedirectToAction(nameof(ResetPasswordConfirmation));
+            var resetPassResult = await _userManager.ResetPasswordAsync(user, resetPasswordModel.Token, resetPasswordModel.Password);
+            if (!resetPassResult.Succeeded)
+            {
+                foreach (var error in resetPassResult.Errors)
+                {
+                    ModelState.TryAddModelError(error.Code, error.Description);
+                }
+                return View();
+            }
+
+            return RedirectToAction(nameof(ResetPasswordConfirmation));
+        }
+
+        [HttpGet]
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
         }
 
         public static string Base64Encode(string plainText) // Cleanup
