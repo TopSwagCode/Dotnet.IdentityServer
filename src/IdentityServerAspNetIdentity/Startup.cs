@@ -36,13 +36,6 @@ namespace IdentityServerAspNetIdentity
         {
             //IdentityModelEventSource.ShowPII = true; // Better Identity stacktraces and messages. (Insecure)
 
-            services.AddSendGrid(options => // Use whatever email provider you want to. I use SendGrid, because it has a basic free plan to get started with.
-            {
-                options.ApiKey = ""; // TODO: Use appsettings
-            });
-
-            services.AddTransient<IEmailService, EmailService>();
-
             services.AddControllersWithViews();
 
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
@@ -50,6 +43,7 @@ namespace IdentityServerAspNetIdentity
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
+
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
 
             var builder = services.AddIdentityServer(options =>
@@ -61,24 +55,21 @@ namespace IdentityServerAspNetIdentity
 
                 // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
                 options.EmitStaticAudienceClaim = true;
-                options.IssuerUri = "http://localhost:5000";
+                options.IssuerUri = Configuration["Identity:IssuerUri"];
             })
-            // this adds the config data from DB (clients, resources)
-            .AddConfigurationStore(options =>
+                .AddConfigurationStore(options => // this adds the config data from DB (clients, resources)
             {
                 options.ConfigureDbContext = builder =>
                     builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
-            })
-            // this adds the operational data from DB (codes, tokens, consents)
-            .AddOperationalStore(options =>
+            }) // this adds the operational data from DB (codes, tokens, consents)
+                .AddOperationalStore(options =>
             {
                 options.ConfigureDbContext = builder =>
                     builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
 
-                // this enables automatic token cleanup. this is optional.
-                options.EnableTokenCleanup = true;
+                options.EnableTokenCleanup = true; // this enables automatic token cleanup. this is optional.
                 options.TokenCleanupInterval = 30;
             })
             .AddAspNetIdentity<ApplicationUser>()
@@ -103,9 +94,16 @@ namespace IdentityServerAspNetIdentity
                     // register your IdentityServer with Google at https://console.developers.google.com
                     // enable the Google+ API
                     // set the redirect URI to http://identity:5000/signin-google
-                    options.ClientId = "########";
-                    options.ClientSecret = "########";
+                    options.ClientId = Configuration["Identity:Google:ClientId"];
+                    options.ClientSecret = Configuration["Identity:Google:ClientSecret"];
                 });
+
+            services.AddSendGrid(options => // Use whatever email provider you want to. I use SendGrid, because it has a basic free plan to get started with.
+            {
+                options.ApiKey = Configuration["SendGridApiKey"];
+            });
+
+            services.AddTransient<IEmailService, EmailService>();
         }
 
         public void Configure(IApplicationBuilder app)
@@ -139,7 +137,7 @@ namespace IdentityServerAspNetIdentity
             var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
             context.Database.Migrate();
 
-            // Add last db and migrate all same place???
+            // TODO: Move Setup logic to other project?
             if (!context.Clients.Any())
             {
                 foreach (var client in Config.Clients)

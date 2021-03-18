@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace IdentityServerHost.Quickstart.UI
+namespace IdentityServerAspNetIdentity.Controllers.Account
 {
     public class ForgotPasswordInputModel
     {

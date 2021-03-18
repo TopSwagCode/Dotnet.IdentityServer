@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace IdentityServerHost.Quickstart.UI
+namespace IdentityServerAspNetIdentity.Controllers.Account
 {
     public class ResetPasswordModela // TODO Rename. ResetPasswordModel is taken by identity itself
     {

@@ -2,8 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using IdentityModel;
-using IdentityServer4;
 using IdentityServer4.Events;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
@@ -14,16 +16,11 @@ using IdentityServerAspNetIdentity.Models;
 using IdentityServerAspNetIdentity.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace IdentityServerHost.Quickstart.UI
+namespace IdentityServerAspNetIdentity.Controllers.Account
 {
     [SecurityHeaders]
     [AllowAnonymous]
@@ -36,7 +33,7 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
         private readonly ApplicationDbContext _dbContext;
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -46,7 +43,7 @@ namespace IdentityServerHost.Quickstart.UI
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
             ApplicationDbContext dbContext,
-            EmailService emailService)
+            IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -139,6 +136,87 @@ namespace IdentityServerHost.Quickstart.UI
         /// Entry point into the signup workflow
         /// </summary>
         [HttpGet]
+        public IActionResult Delete()
+        {
+            var viewModel = new DeleteUserViewModel
+            {
+                IsLocalUser = true
+            };
+
+            if (User.IsAuthenticated())
+            {
+                if (!IsLocalUser())
+                {
+                    viewModel.IsLocalUser = false;
+                }
+                else
+                {
+                    // Set username here for easier access
+                }
+            }
+
+            return View(viewModel);
+        }
+
+        /// <summary>
+        /// Handle postback from username/password login
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(DeleteUserInputModel model)
+        {
+            
+            
+            if (IsLocalUser()) // Only require user to type signin, if local user.
+            {
+                var signinResult = await _signInManager.PasswordSignInAsync(model.Username, model.Password, false, false);
+                if (signinResult.Succeeded)
+                {
+                    
+                }
+                else
+                {
+                    throw new Exception("Failed to check credentials. Do not allow user to be deleted");
+                }
+
+            }
+
+            var userToDelete = await _userManager.FindByNameAsync(model.Username);
+            var deleteResult = await _userManager.DeleteAsync(userToDelete);
+
+            if (!deleteResult.Succeeded)
+            {
+                throw new Exception("Failed to delete user :( ");
+            }
+
+            return View(nameof(Goodbye));
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
+        public IActionResult Goodbye()
+        {
+
+            return View();
+        }
+
+        private bool IsLocalUser()
+        {
+            if (!User.IsAuthenticated())
+                return true;
+
+            var loginType = User.Claims.SingleOrDefault(x => string.Equals(x.Type, "amr", StringComparison.InvariantCultureIgnoreCase));
+
+            return loginType != null && !string.IsNullOrEmpty(loginType.Value) && string.Equals(loginType.Value, "pwd",
+                StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
         public IActionResult Signup(string base64ReturnUrl)
         {
             var signupViewModel = new SignupViewModel
@@ -157,8 +235,6 @@ namespace IdentityServerHost.Quickstart.UI
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Signup(SignupInputModel model)
         {
-            // TODO Propper Validate email and show errors
-            // TODO Save redirect url for Create User Workflow, so User can be returned to the app they tried to access! This is a must if several apps accesses the same user signup flow! For now hardcoded for javascript client
             var signupViewModel = new SignupViewModel
             {
                 Base64ReturnUrl = model.Base64ReturnUrl

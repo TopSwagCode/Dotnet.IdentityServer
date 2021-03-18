@@ -1,4 +1,4 @@
-﻿namespace IdentityServerHost.Quickstart.UI
+﻿namespace IdentityServerAspNetIdentity.Controllers.Account
 {
     public class ForgotPasswordViewModel : ForgotPasswordInputModel
     {
