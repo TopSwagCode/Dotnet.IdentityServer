@@ -86,12 +86,12 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             if(userSignupRequest == null)
             {
-                throw new NotImplementedException("Could not find UserSignupRequest for given token / email"); // Handle this!
+                throw new NotImplementedException("Could not find UserSignupRequest for given token / email"); // TODO: Handle this!
             }
             
             if (!string.Equals(model.Password, model.PasswordRepeat))
             {
-                throw new NotImplementedException("Passwords did not match!"); // Handle this!
+                throw new NotImplementedException("Passwords did not match!"); // TODO: Handle this!
             }
 
             var user = new ApplicationUser
@@ -129,7 +129,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             }
             
 
-            throw new NotImplementedException("TODO: Handle failed login attempt and what to do!");
+            throw new NotImplementedException("TODO: Handle failed login attempt and what to do!"); // TODO
         }
 
         /// <summary>
@@ -189,7 +189,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
                 throw new Exception("Failed to delete user :( ");
             }
 
-            return View(nameof(Goodbye));
+            return RedirectToAction(nameof(Goodbye));
         }
 
         /// <summary>
@@ -211,6 +211,62 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             return loginType != null && !string.IsNullOrEmpty(loginType.Value) && string.Equals(loginType.Value, "pwd",
                 StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        private string GetUsername()
+        {
+            return User.Claims.SingleOrDefault(x => x.Type == "preferred_username")?.Value;
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+
+        /// <summary>
+        /// Handle postback from username/password login
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordInputModel model)
+        {
+            if (!User.IsAuthenticated())
+            {
+                throw new Exception("User is not logged in");
+            }
+
+            if (!IsLocalUser())
+            {
+                throw new Exception("External users cannot change password");
+            }
+
+            var username = GetUsername();
+
+            var user = await _userManager.FindByNameAsync(username);
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword,model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                throw new Exception("Failed to change password");
+            }
+
+            return RedirectToAction(nameof(ChangePasswordSuccess));
+        }
+
+        /// <summary>
+        /// Entry point into the signup workflow
+        /// </summary>
+        [HttpGet]
+        public IActionResult ChangePasswordSuccess()
+        {
+
+            return View();
         }
 
         /// <summary>

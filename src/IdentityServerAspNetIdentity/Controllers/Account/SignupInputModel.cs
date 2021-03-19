@@ -19,4 +19,10 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
     {
         public bool IsLocalUser { get; set; }
     }
+
+    public class ChangePasswordInputModel
+    {
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
+    }
 }
