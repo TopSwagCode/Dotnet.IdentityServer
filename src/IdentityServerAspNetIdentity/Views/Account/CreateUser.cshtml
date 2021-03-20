@@ -1,0 +1,46 @@
+@model IdentityServerAspNetIdentity.Controllers.Account.CreateUserViewModel
+
+<div class="login-page">
+    <div class="lead">
+        <h1>Create user</h1>
+        <p>A email is on it's way to you. Check spam if you don't get it.</p>
+        <p>Feel free to pick whatever username you would like to login with or simply keep email as login name</p>
+    </div>
+
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Local Account</h2>
+                </div>
+
+                <div class="card-body">
+                    <form asp-route="Signup">
+                        <input type="hidden" asp-for="Email">
+
+                        <div class="form-group">
+                            <label asp-for="Username"></label>
+                            <input class="form-control" placeholder="Username" asp-for="Username" autofocus>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Password"></label>
+                            <input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="PasswordRepeat"></label>
+                            <input type="password" class="form-control" placeholder="Repeat Password" asp-for="PasswordRepeat" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="EmailValidationToken"></label>
+                            <input class="form-control" placeholder="Email validation Token" asp-for="EmailValidationToken" autocomplete="off">
+                        </div>
+
+                        <button class="btn btn-primary" name="button" value="create">Create user</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
