@@ -8,21 +8,4 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
         public string Email { get; set; }
         public string Base64ReturnUrl { get; set; }
     }
-
-    public class DeleteUserInputModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class DeleteUserViewModel : DeleteUserInputModel
-    {
-        public bool IsLocalUser { get; set; }
-    }
-
-    public class ChangePasswordInputModel
-    {
-        public string CurrentPassword { get; set; }
-        public string NewPassword { get; set; }
-    }
 }

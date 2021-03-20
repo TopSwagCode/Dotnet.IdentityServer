@@ -3,6 +3,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityModel;
@@ -22,6 +23,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdentityServerAspNetIdentity.Controllers.Account
 {
+    /*
+        foreach (var error in resetPassResult.Errors)
+        {
+            ModelState.TryAddModelError(error.Code, error.Description);
+        }
+     */
+
     [SecurityHeaders]
     [AllowAnonymous]
     public class AccountController : Controller
@@ -55,6 +63,14 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             _emailService = emailService;
         }
 
+        private void AddErrorsToModelState(IEnumerable<IdentityError> identityErrors)
+        {
+            foreach (var identityError in identityErrors)
+            {
+                ModelState.TryAddModelError(identityError.Code, identityError.Description);
+            }
+        }
+
         /// <summary>
         /// Entry point into the signup workflow
         /// </summary>
@@ -86,12 +102,20 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             if(userSignupRequest == null)
             {
-                throw new NotImplementedException("Could not find UserSignupRequest for given token / email"); // TODO: Handle this!
+                ModelState.TryAddModelError("", "Did not find any user signup request for this email");
             }
             
             if (!string.Equals(model.Password, model.PasswordRepeat))
             {
-                throw new NotImplementedException("Passwords did not match!"); // TODO: Handle this!
+                ModelState.TryAddModelError("", "Passwords was not the same.");
+
+                return View(new CreateUserViewModel
+                {
+                    Base64ReturnUrl = model.Base64ReturnUrl,
+                    Email =  model.Email,
+                    EmailValidationToken = model.EmailValidationToken,
+                    Username =  model.Username
+                });
             }
 
             var user = new ApplicationUser
@@ -105,8 +129,15 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             if (!createUserResult.Succeeded)
             {
-                // TODO: Handle this nicely
-                throw new NotImplementedException($"Failed to create new user! Errors: [ { string.Join(" - ",createUserResult.Errors.Select(x => $"Code: {x.Code}, Description: {x.Description}").ToList()) } ]"); // Handle this!
+                AddErrorsToModelState(createUserResult.Errors);
+
+                return View(new CreateUserViewModel
+                {
+                    Base64ReturnUrl = model.Base64ReturnUrl,
+                    Email = model.Email,
+                    EmailValidationToken = model.EmailValidationToken,
+                    Username = model.Username
+                });
             }
             var rememberLogin = true; // TODO: Ask user if they actually wants to be remembered
 
@@ -126,10 +157,15 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             {
                 await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials")); // TODO Add clientid context and add return url, so user is returned to the app they tried to access!
                 ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
-            }
-            
 
-            throw new NotImplementedException("TODO: Handle failed login attempt and what to do!"); // TODO
+                return View(new CreateUserViewModel
+                {
+                    Base64ReturnUrl = model.Base64ReturnUrl,
+                    Email = model.Email,
+                    EmailValidationToken = model.EmailValidationToken,
+                    Username = model.Username
+                });
+            }
         }
 
         /// <summary>
@@ -151,7 +187,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
                 }
                 else
                 {
-                    // Set username here for easier access
+                    viewModel.Username = GetUsername();
                 }
             }
 
@@ -169,16 +205,16 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             
             if (IsLocalUser()) // Only require user to type signin, if local user.
             {
-                var signinResult = await _signInManager.PasswordSignInAsync(model.Username, model.Password, false, false);
-                if (signinResult.Succeeded)
+                var signinResult = await _signInManager.PasswordSignInAsync(model.Username, model.Password, false, true);
+                if (!signinResult.Succeeded)
                 {
-                    
-                }
-                else
-                {
-                    throw new Exception("Failed to check credentials. Do not allow user to be deleted");
-                }
+                    ModelState.TryAddModelError("", "Failed to delete user, invalid credentials");
 
+                    return View(new DeleteUserViewModel
+                    {
+                        Username = model.Username
+                    });
+                }
             }
 
             var userToDelete = await _userManager.FindByNameAsync(model.Username);
@@ -186,7 +222,12 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             if (!deleteResult.Succeeded)
             {
-                throw new Exception("Failed to delete user :( ");
+                AddErrorsToModelState(deleteResult.Errors);
+
+                return View(new DeleteUserViewModel
+                {
+                    Username = model.Username
+                });
             }
 
             return RedirectToAction(nameof(Goodbye));
@@ -237,12 +278,16 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
         {
             if (!User.IsAuthenticated())
             {
-                throw new Exception("User is not logged in");
+                ModelState.AddModelError("", "Your not logged in, or your access has just expired. Please login again");
+
+                return View(new ChangePasswordInputModel());
             }
 
             if (!IsLocalUser())
             {
-                throw new Exception("External users cannot change password");
+                ModelState.AddModelError("", "Only local users can change password.");
+
+                return View(new ChangePasswordInputModel());
             }
 
             var username = GetUsername();
@@ -253,7 +298,9 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             if (!result.Succeeded)
             {
-                throw new Exception("Failed to change password");
+                AddErrorsToModelState(result.Errors);
+
+                return View(new ChangePasswordInputModel());
             }
 
             return RedirectToAction(nameof(ChangePasswordSuccess));
@@ -330,12 +377,11 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
                 await _dbContext.SaveChangesAsync();
             }
 
-            // http://localhost:5000/account/createuser?email={email}&emailValidationToken={emailValidationToken.ToString()}&base64ReturnUrl={base64ReturnUrl}
             var callback = Url.Action(nameof(CreateUser), "Account", new { email = model.Email, emailValidationToken = userSignupRequest.EmailValidationToken.ToString(), base64ReturnUrl = model.Base64ReturnUrl }, Request.Scheme);
 
             var (plainTextContent, htmlContent) = EmailTemplate.Signup(userSignupRequest.EmailValidationToken.ToString(), callback);
 
-            await _emailService.SendEmailAsync(model.Email, "Help-Motivate.Me Signup", plainTextContent, htmlContent);
+            await _emailService.SendEmailAsync(model.Email, "Signup", plainTextContent, htmlContent);
 
             return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={new Guid()}&base64ReturnUrl={model.Base64ReturnUrl}");
         }
@@ -356,7 +402,11 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             // Look at token providers https://code-maze.com/password-reset-aspnet-core-identity/
 
             if (!ModelState.IsValid)
-                return View(model);
+                return View(new ForgotPasswordViewModel
+                {
+                    Base64ReturnUrl = model.Base64ReturnUrl,
+                    Email = model.Email
+                });
 
             var user = await _userManager.FindByEmailAsync(model.Email);
 
@@ -370,7 +420,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             var (plainTextContent, htmlContent) = EmailTemplate.ResetPassword(token, callback);
 
-            await _emailService.SendEmailAsync(model.Email,"Reset password Help-Motivate.Me", plainTextContent, htmlContent);
+            await _emailService.SendEmailAsync(model.Email,"Reset password", plainTextContent, htmlContent);
 
             return RedirectToAction(nameof(ForgotPasswordConfirmation));
         }
@@ -404,10 +454,8 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             var resetPassResult = await _userManager.ResetPasswordAsync(user, resetPasswordModel.Token, resetPasswordModel.Password);
             if (!resetPassResult.Succeeded)
             {
-                foreach (var error in resetPassResult.Errors)
-                {
-                    ModelState.TryAddModelError(error.Code, error.Description);
-                }
+                AddErrorsToModelState(resetPassResult.Errors);
+
                 return View();
             }
 
