@@ -38,6 +38,10 @@ username "alice" and "bob" with password: Pass123$
 
 You can add Google auth by creating your own google app account and inserting the secrets here. Remember to setup the redirect urls in your google app. They are able to redirect to localhost etc. for local development.
 
+For debug the project is using a fake email service. So if you want to create a new user, you will have to either check the database for EmailValidationToken on UserSignuoRequestsTable or check the console log output where it is written in Debug.
+
+![emailvalidationtoken.png](assets/emailvalidationtoken.png)
+
 This is a work in progress project :) Handle with care. Alot of hardcoded IP's still in place to be fixed.
 
 # Links

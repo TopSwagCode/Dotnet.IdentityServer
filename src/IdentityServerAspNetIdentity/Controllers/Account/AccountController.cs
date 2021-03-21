@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace IdentityServerAspNetIdentity.Controllers.Account
 {
@@ -42,6 +43,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
         private readonly IEventService _events;
         private readonly ApplicationDbContext _dbContext;
         private readonly IEmailService _emailService;
+        private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -51,7 +53,8 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
             ApplicationDbContext dbContext,
-            IEmailService emailService)
+            IEmailService emailService,
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -61,6 +64,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             _events = events;
             _dbContext = dbContext;
             _emailService = emailService;
+            _logger = logger;
         }
 
         private void AddErrorsToModelState(IEnumerable<IdentityError> identityErrors)
@@ -379,8 +383,10 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
 
             var callback = Url.Action(nameof(CreateUser), "Account", new { email = model.Email, emailValidationToken = userSignupRequest.EmailValidationToken.ToString(), base64ReturnUrl = model.Base64ReturnUrl }, Request.Scheme);
 
-            var (plainTextContent, htmlContent) = EmailTemplate.Signup(userSignupRequest.EmailValidationToken.ToString(), callback);
+            _logger.LogDebug($"EmailValidationToken is:  \"{userSignupRequest.EmailValidationToken}\"");
 
+            var (plainTextContent, htmlContent) = EmailTemplate.Signup(userSignupRequest.EmailValidationToken.ToString(), callback);
+            
             await _emailService.SendEmailAsync(model.Email, "Signup", plainTextContent, htmlContent);
 
             return Redirect($"~/account/createuser?email={model.Email}&emailValidationToken={new Guid()}&base64ReturnUrl={model.Base64ReturnUrl}");

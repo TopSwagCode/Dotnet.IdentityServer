@@ -57,6 +57,7 @@ namespace IdentityServerAspNetIdentity.Services
 
     public class FakeEmailService : IEmailService
     {
+
         public Task SendEmailAsync(string email, string subject, string plainTextContent, string htmlContent)
         {
             return Task.CompletedTask;
