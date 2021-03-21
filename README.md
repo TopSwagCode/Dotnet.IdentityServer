@@ -44,6 +44,30 @@ For debug the project is using a fake email service. So if you want to create a 
 
 This is a work in progress project :) Handle with care. Alot of hardcoded IP's still in place to be fixed.
 
+# Dotnet Migrations
+
+## Init
+
+For starting up and creating migrations from scratch if you choose to do so:
+
+dotnet ef migrations add InitialIdentityServerPersistedGrantDbMigration -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrantDb
+
+dotnet ef migrations add InitialIdentityServerConfigurationDbMigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/ConfigurationDb
+
+dotnet ef migrations add InitialIDbMigration -c ApplicationDbContext -o Data/Migrations/IdentityServer/ApplicationDb
+
+
+dotnet ef database update --context ApplicationDbContext
+dotnet ef database update --context PersistedGrantDbContext
+dotnet ef database update --context ConfigurationDbContext
+
+## Adding more tables to the Identity database
+
+
+Within the Identity project run the following command to add new migrations. Otherwise, it is like working with EF Core as normally. I have choosen to use the ApplicationDBContext to add new tables. Mostly because this would enable me to make foreign key against the AspNetUser table. You could move logic to a new DB context and store it in a different database.
+
+dotnet ef migrations add UserSignupRequest -c ApplicationDbContext -o Data/Migrations/IdentityServer/ApplicationDb
+
 # Links
 
 https://docs.microsoft.com/en-us/aspnet/core/security/docker-compose-https?view=aspnetcore-5.0
