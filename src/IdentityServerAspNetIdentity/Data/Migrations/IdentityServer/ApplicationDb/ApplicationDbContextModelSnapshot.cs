@@ -83,6 +83,27 @@ namespace IdentityServerAspNetIdentity.Data.Migrations.IdentityServer.Applicatio
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("IdentityServerAspNetIdentity.Models.UserSignupRequest", b =>
+                {
+                    b.Property<Guid>("EmailValidationToken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("ExpireOnUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsEmailValidationTokenUsed")
+                        .HasColumnType("bit");
+
+                    b.HasKey("EmailValidationToken");
+
+                    b.ToTable("UserSignupRequests");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")

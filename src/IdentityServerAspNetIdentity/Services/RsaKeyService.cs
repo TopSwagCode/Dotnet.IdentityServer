@@ -35,7 +35,7 @@ namespace IdentityServerAspNetIdentity.Services
         ///  "D": ""
         /// }
         /// </summary>
-        private string _file
+        private string File
         {
             get
             {
@@ -53,9 +53,9 @@ namespace IdentityServerAspNetIdentity.Services
 
         public bool NeedsUpdate()
         {
-            if (File.Exists(_file))
+            if (System.IO.File.Exists(File))
             {
-                var creationDate = File.GetCreationTime(_file);
+                var creationDate = System.IO.File.GetCreationTime(File);
                 return DateTime.Now.Subtract(creationDate) > _timeSpan;
             }
             return true;
@@ -63,16 +63,14 @@ namespace IdentityServerAspNetIdentity.Services
 
         public RSAParameters GetRandomKey()
         {
-            using (var rsa = new RSACryptoServiceProvider(2048))
+            using var rsa = new RSACryptoServiceProvider(2048);
+            try
             {
-                try
-                {
-                    return rsa.ExportParameters(true);
-                }
-                finally
-                {
-                    rsa.PersistKeyInCsp = false;
-                }
+                return rsa.ExportParameters(true);
+            }
+            finally
+            {
+                rsa.PersistKeyInCsp = false;
             }
         }
 
@@ -83,7 +81,7 @@ namespace IdentityServerAspNetIdentity.Services
                 var p = GetRandomKey();
                 RSAParametersWithPrivate t = new RSAParametersWithPrivate();
                 t.SetParameters(p);
-                File.WriteAllText(_file, JsonConvert.SerializeObject(t, Formatting.Indented));
+                System.IO.File.WriteAllText(File, JsonConvert.SerializeObject(t, Formatting.Indented));
             }
             return this;
         }
@@ -96,8 +94,8 @@ namespace IdentityServerAspNetIdentity.Services
         /// <returns></returns>
         public RSAParameters GetKeyParameters()
         {
-            if (!File.Exists(_file)) throw new FileNotFoundException("Check configuration - cannot find auth key file: " + _file);
-            var keyParams = JsonConvert.DeserializeObject<RSAParametersWithPrivate>(File.ReadAllText(_file));
+            if (!System.IO.File.Exists(File)) throw new FileNotFoundException("Check configuration - cannot find auth key file: " + File);
+            var keyParams = JsonConvert.DeserializeObject<RSAParametersWithPrivate>(System.IO.File.ReadAllText(File));
             return keyParams.ToRSAParameters();
         }
 

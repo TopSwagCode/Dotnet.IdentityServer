@@ -18,7 +18,7 @@ document.getElementById("apiAdmin").addEventListener("click", apiAdmin, false);
 document.getElementById("logout").addEventListener("click", logout, false);
 
 var config = {
-    authority: "http://identity:5000",
+    authority: "http://localhost:5000",
     client_id: "js",
     redirect_uri: "http://localhost:5003/callback.html",
     response_type: "code",
