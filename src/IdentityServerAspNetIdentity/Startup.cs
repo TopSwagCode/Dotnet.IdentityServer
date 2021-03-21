@@ -103,7 +103,7 @@ namespace IdentityServerAspNetIdentity
                 options.ApiKey = Configuration["SendGridApiKey"];
             });
 
-            services.AddTransient<IEmailService, EmailService>();
+            services.AddTransient<IEmailService, FakeEmailService>();
         }
 
         public void Configure(IApplicationBuilder app)
