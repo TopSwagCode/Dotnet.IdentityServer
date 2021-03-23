@@ -53,7 +53,7 @@ services:
             - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
             - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
             - Identity:Authority=http://identity:5000
-            - Cors:http://localhost:5003
+            - Cors:http://localhost:5003,http://localhost:5005
         volumes:
             - ./.certs/https:/https:ro
         depends_on:
@@ -70,6 +70,12 @@ services:
             - Identity:Authority=http://identity:5000
         volumes:
             - ./.certs/https:/https:ro
+        depends_on:
+            - db
+    blazor:
+        build: ./BlazorClient
+        ports:
+            - "5005:80"
         depends_on:
             - db
 

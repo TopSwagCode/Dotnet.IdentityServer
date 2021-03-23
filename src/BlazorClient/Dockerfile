@@ -2,6 +2,7 @@
 WORKDIR /app
 COPY . ./
 RUN dotnet publish -c Release -o output
+
 FROM nginx:alpine
 WORKDIR /var/www/web
 COPY --from=build-env /app/output/wwwroot .
