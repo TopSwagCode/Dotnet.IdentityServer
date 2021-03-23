@@ -1,0 +1,7 @@
+﻿@page "/admin"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "admin")]
+
+<h1>Admin page</h1>
+<p>This component demonstrates private admin page.</p>
