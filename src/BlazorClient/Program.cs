@@ -41,7 +41,7 @@ namespace BlazorClient
             builder.Services.AddScoped<CustomAuthorizationMessageHandler>();
 
             builder.Services.AddHttpClient<WeatherForecastClient>(
-                    client => client.BaseAddress = new Uri("http://localhost:6001/"))
+                    client => client.BaseAddress = new Uri("https://localhost:6002/"))
                 .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
             
             await builder.Build().RunAsync();
@@ -81,7 +81,7 @@ namespace BlazorClient
             NavigationManager navigationManager)
             : base(provider, navigationManager)
         {
-            ConfigureHandler(authorizedUrls: new[] { "http://localhost:6001/weatherforecast" });
+            ConfigureHandler(authorizedUrls: new[] { "https://localhost:6002/weatherforecast" });
         }
     }
 

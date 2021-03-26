@@ -27,7 +27,6 @@ namespace MvcClient
         {
             services.AddControllersWithViews();
 
-
             JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
             services.AddAuthentication(options =>
@@ -38,12 +37,13 @@ namespace MvcClient
                 .AddCookie("Cookies")
                 .AddOpenIdConnect("oidc", options =>
                 {
-                    options.Authority = "http://identity:5000";
+                    options.Authority = "https://localhost:5001";
                     
                     options.ClientId = "mvc";
                     options.ClientSecret = "secret";
                     options.ResponseType = "code";
                     options.RequireHttpsMetadata = false;
+                    //options.MetadataAddress = "http://identity:5000/.well-known/openid-configuration";
                     options.SaveTokens = true;
 
                     options.Scope.Add("api1");

@@ -43,6 +43,7 @@ namespace Api
             {
                 options.Authority = Configuration["Identity:Authority"];
                 options.RequireHttpsMetadata = false;
+                //TODO: Change metadata url!
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = false,

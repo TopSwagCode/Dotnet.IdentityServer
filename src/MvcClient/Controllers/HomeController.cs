@@ -51,7 +51,7 @@ namespace MvcClient.Controllers
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var content = await client.GetStringAsync("http://api:6001/identity");
+            var content = await client.GetStringAsync("https://localhost:6002/identity");
 
             ViewBag.Json = JArray.Parse(content).ToString();
             return View("json");
@@ -64,7 +64,7 @@ namespace MvcClient.Controllers
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await client.GetAsync("http://api:6001/identity/admin");
+            var response = await client.GetAsync("https://localhost:6002/identity/admin");
             
             if(response.StatusCode == System.Net.HttpStatusCode.Forbidden)
             {

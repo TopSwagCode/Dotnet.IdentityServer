@@ -17,6 +17,7 @@ using IdentityServer4.Models;
 using IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using Microsoft.AspNetCore.Http;
 using SendGrid.Extensions.DependencyInjection;
 
 namespace IdentityServerAspNetIdentity
@@ -52,7 +53,7 @@ namespace IdentityServerAspNetIdentity
                 options.Events.RaiseInformationEvents = true;
                 options.Events.RaiseFailureEvents = true;
                 options.Events.RaiseSuccessEvents = true;
-
+                
                 // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
                 options.EmitStaticAudienceClaim = true;
                 options.IssuerUri = Configuration["Identity:IssuerUri"];
@@ -116,6 +117,22 @@ namespace IdentityServerAspNetIdentity
                 app.UseDatabaseErrorPage();
             }
 
+            /* Needed behind loadbalancer
+            app.Use((context, next) =>
+            {
+                context.Request.Scheme = "https";
+                return next();
+            });
+            */
+            /*
+            app.Use((context, next) =>
+            {
+                // didnt work :/
+                context.Request.Scheme = "https";
+                context.Request.Host = new HostString("localhost", 5001);
+                return next();
+            });
+            */
             app.UseStaticFiles();
 
             app.UseRouting();

@@ -52,10 +52,10 @@ namespace IdentityServerAspNetIdentity
                     AllowedGrantTypes = GrantTypes.Code,
 
                     // where to redirect to after login
-                    RedirectUris = { "http://localhost:5002/signin-oidc" },
+                    RedirectUris = { "http://localhost:5004/signin-oidc", "https://localhost:5005/signin-oidc" },
 
                     // where to redirect to after logout
-                    PostLogoutRedirectUris = { "http://localhost:5002/signout-callback-oidc" },
+                    PostLogoutRedirectUris = { "http://localhost:5004/signout-callback-oidc", "https://localhost:5005/signout-callback-oidc" },
 
                     AllowOfflineAccess = true,
 
@@ -74,9 +74,9 @@ namespace IdentityServerAspNetIdentity
                     AllowedGrantTypes = GrantTypes.Code,
                     RequireClientSecret = false,
 
-                    RedirectUris =           { "http://localhost:5003/callback.html" },
-                    PostLogoutRedirectUris = { "http://localhost:5003/index.html" },
-                    AllowedCorsOrigins =     { "http://localhost:5003" },
+                    RedirectUris =           { "http://localhost:5002/callback.html", "https://localhost:5003/callback.html" },
+                    PostLogoutRedirectUris = { "http://localhost:5002/index.html", "https://localhost:5003/index.html" },
+                    AllowedCorsOrigins =     { "http://localhost:5002", "https://localhost:5003" },
 
                     AllowedScopes =
                     {
@@ -93,9 +93,9 @@ namespace IdentityServerAspNetIdentity
                     RequirePkce = true,
                     RequireClientSecret = false,
 
-                    RedirectUris =           { "http://localhost:5005/authentication/login-callback" },
-                    PostLogoutRedirectUris = { "http://localhost:5005/" },
-                    AllowedCorsOrigins =     { "http://localhost:5005" },
+                    RedirectUris =           { "http://localhost:5006/authentication/login-callback", "https://localhost:5007/authentication/login-callback" },
+                    PostLogoutRedirectUris = { "http://localhost:5006/", "https://localhost:5007/" },
+                    AllowedCorsOrigins =     { "http://localhost:5006", "https://localhost:5007"},
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,

@@ -11,11 +11,12 @@ services:
         build: ./IdentityServerAspNetIdentity
         ports:
             - "5000:5000"
+            - "5001:5001"
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
-            - ASPNETCORE_URLS=http://+:5000
-            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
+            - ASPNETCORE_URLS=http://*:5000;https://*:5001
             - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
             - ConnectionStrings__DefaultConnection= server=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
         volumes:
             - ./.certs/https:/https:ro
@@ -33,12 +34,13 @@ services:
     javascriptclient:
         build: ./JavaScriptClient
         ports:
+            - "5002:5002"
             - "5003:5003"
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
-            - ASPNETCORE_URLS=http://+:5003
-            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
+            - ASPNETCORE_URLS=http://+:5002;https://+:5003
             - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+            - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
         volumes:
             - ./.certs/https:/https:ro
         depends_on:
@@ -47,13 +49,14 @@ services:
         build: ./API
         ports:
             - "6001:6001"
+            - "6002:6002"
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
-            - ASPNETCORE_URLS=http://+:6001
+            - ASPNETCORE_URLS=http://+:6001;https://+:6002
+            - Identity:Authority=http://identity:5000
+            - Cors:http://localhost:5002,https://localhost:5003,http://localhost:5005
             - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
             - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
-            - Identity:Authority=http://identity:5000
-            - Cors:http://localhost:5003,http://localhost:5005
         volumes:
             - ./.certs/https:/https:ro
         depends_on:
@@ -61,13 +64,14 @@ services:
     mvc:
         build: ./MvcClient
         ports:
-            - "5002:5002"
+            - "5004:5004"
+            - "5005:5005"
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
-            - ASPNETCORE_URLS=http://+:5002
+            - ASPNETCORE_URLS=http://+:5004;https://+:5005
+            - Identity:Authority=http://identity:5000
             - ASPNETCORE_Kestrel__Certificates__Default__Password=Your_password123
             - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
-            - Identity:Authority=http://identity:5000
         volumes:
             - ./.certs/https:/https:ro
         depends_on:
@@ -75,7 +79,7 @@ services:
     blazor:
         build: ./BlazorClient
         ports:
-            - "5005:80"
+            - "5006:80"
         depends_on:
             - db
 
