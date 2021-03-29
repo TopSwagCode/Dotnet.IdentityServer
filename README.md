@@ -4,39 +4,38 @@
 <a href="https://identityserver4.readthedocs.io/en/latest/"><img src="assets/idserver.png" height="50px"></a>
 <a href="https://topswagcode.com/"><img src="assets/topswagcode.png" height="50px"></a>
 
-This project, is showing how to implement authentication with IdentityServer for a range of different scenarios.
+This project goal is to show a basic implementation of IdentityServer for a range of different scenarios.
 
 ![overview.png](assets/overview.png)
 
-So in this repository you will find 3 Clients using the IdentityServer. AspNetCore MVC client and a Javascript client using code flow, where a user is redirected to the IdentityServer for login, and returned with a code. The code will then be exchanged for a Bearer token, that can be used to call API's as proof you have access to the given resources. Then there is a Dotnet core Console app using client credentials flow. This would be used for background services not running in a context of a user.
+In this repository you will find 4 Clients using the IdentityServer. AspNetCore MVC client, a Javascript client, a Blazor WASM client and a Console APP Client. All showing how you can check claims and show roles of the logged in user.
 
 There is also included an API that points at IdentityServer as Authority. You could have any number of API's as microservice in your setup. They take the bearer token they receive from the calls and validate it against IdentityServer, that the user has access to whatever resource they are trying to get.
 
 # Setup
 
-If you want single signon to work across clients add identity to hosts file on whatever OS you use.
+To setup this project you need some localhost ssl certificates and a MS SQL or Postgres database. For the SSL certificates there is a powershell script to generate them: src/GenerateSslCerts.ps1
 
-eg:
-127.0.0.1 Identity
+For the database, if you have docker and docker-compose installed, you can run the src\docker-compose.dependencies.yml for creating a database and running seeding / migrations scripts. Otherwise install your database of choice manually and run seeding / migrations scripts.
 
-If you don't want to use host mappings, just change all places where identity:5000 to localhost:5000.
+# Running
 
-run docker-compose up to start the project
+You have 2 options for running this project locally. Either run src\docker-compose.yml and try out the solution. If you want to develop and debug locally I would recommend running src\docker-compose.dependencies.yml for getting a database and seeding test data. IP / Ports can be seen below here: 
 
 Ip/port:
 
-* http://localhost:5000 IdenitityServer
-* http://localhost:5002 Dotnet MVC Project
-* http://localhost:5003 Javascript Client
-* http://localhost:6001 API Project
-
-There is included a docker-compose for dependencies and seed data, if you just want MS SQL started with some predefined data.
+* https://localhost:5001 IdenitityServer (Docker-compose and debug)
+* https://localhost:5003 Javascript Client (Docker-compose and debug)
+* https://localhost:5005 Dotnet MVC Project (Docker-compose and debug)
+* http://localhost:5006 Blazor Client (Docker-compose)
+* https://localhost:5007 Blazor Client (Debug)
+* https://localhost:6002 API Project (Docker-compose and debug)
 
 Default users:
 
 username "alice" and "bob" with password: Pass123$
 
-You can add Google auth by creating your own google app account and inserting the secrets here. Remember to setup the redirect urls in your google app. They are able to redirect to localhost etc. for local development.
+You can add Google authentication by creating your own google app account and inserting the secrets in the appsettings of identity project. Remember to setup the redirect urls in your google app. They are able to redirect to localhost etc. for local development.
 
 For debug the project is using a fake email service. So if you want to create a new user, you will have to either check the database for EmailValidationToken on UserSignuoRequestsTable or check the console log output where it is written in Debug.
 
@@ -69,7 +68,7 @@ Within the Identity project run the following command to add new migrations. Oth
 
 dotnet ef migrations add UserSignupRequest -c ApplicationDbContext -o Data/Migrations/IdentityServer/ApplicationDb
 
-# Links
+# Some links I found usefull while creating this project
 
 https://docs.microsoft.com/en-us/aspnet/core/security/docker-compose-https?view=aspnetcore-5.0
 
@@ -86,3 +85,23 @@ https://hub.docker.com/_/microsoft-mssql-server
 https://hub.docker.com/_/postgres
 
 https://docs.docker.com/compose/aspnet-mssql-compose/
+
+# Roadmap
+
+I have created a github project, where you can keep updated about the progress and roadmap: https://github.com/users/TopSwagCode/projects/1
+
+* Currently goal is to release version 1.0.0 of this project with basic user signup / login flow.
+* Next version is planned to be focusing on Admin pages for user / role management.
+
+# Contributors
+
+This project would love help! And there is plenty of stuff that needs help on getting done!
+
+* Testing (Unit tests, Integration tests, Manuel tests)
+* Documentation
+* Refactoring / Clean code
+* Adding new features
+* Bug fixing
+
+This project is by no mean perfect and getting to be part of the project shouldn't be too hard. There is one simple rule. THE BOY SCOUTS RULE: “Always leave the campground cleaner than you found it.” If you find a mess on the ground, you clean it up regardless of who might have made it. We don't need perfect Pull requests, but we shoulnd't leave the project in a worse state afterwards ;)
+
