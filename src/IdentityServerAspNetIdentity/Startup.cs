@@ -104,7 +104,7 @@ namespace IdentityServerAspNetIdentity
                 options.ApiKey = Configuration["SendGridApiKey"];
             });
 
-            services.AddTransient<IEmailService, FakeEmailService>();
+            services.AddTransient<IEmailService, EmailService>();
         }
 
         public void Configure(IApplicationBuilder app)
@@ -117,19 +117,12 @@ namespace IdentityServerAspNetIdentity
                 app.UseMigrationsEndPoint();
             }
 
-            /* Needed behind loadbalancer
-            app.Use((context, next) =>
-            {
-                context.Request.Scheme = "https";
-                return next();
-            });
-            */
             /*
+                Needed behind loadbalancer,
+                so loadbalancer can forward trafic to http.
             app.Use((context, next) =>
             {
-                // didnt work :/
                 context.Request.Scheme = "https";
-                context.Request.Host = new HostString("localhost", 5001);
                 return next();
             });
             */
