@@ -12,6 +12,14 @@ services:
             dockerfile: Dockerfile-Migration
             context: ./IdentityServerAspNetIdentity
         environment:
-            - ConnectionStrings__DefaultConnection= server=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
+            - ConnectionStrings__DefaultConnection=server=db;database=Identity;User Id=sa;password=Your_password123;trusted_connection=false;
+        depends_on:
+            - db
+    externalidentityseed:
+        build: 
+            dockerfile: Dockerfile-Migration
+            context: ./ExternalIdentityServerAspNetIdentity
+        environment:
+            - ConnectionStrings__DefaultConnection=server=db;database=ExternalIdentity;User Id=sa;password=Your_password123;trusted_connection=false;
         depends_on:
             - db

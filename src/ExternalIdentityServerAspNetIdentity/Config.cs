@@ -66,6 +66,29 @@ namespace ExternalIdentityServerAspNetIdentity
                         "api1"
                     }
                 },
+                new Client
+                {
+                    ClientId = "IdentityServer",
+                    ClientSecrets = { new Secret("secret".Sha256()) },
+
+                    AllowedGrantTypes = GrantTypes.Code,
+
+                    // where to redirect to after login
+                    RedirectUris = { "http://localhost:5000/signin-oidc", "https://localhost:5001/signin-oidc" },
+
+                    // where to redirect to after logout
+                    PostLogoutRedirectUris = { "http://localhost:5000/signout-callback-oidc", "https://localhost:5001/signout-callback-oidc" },
+
+                    AllowOfflineAccess = true,
+
+                    AllowedScopes = new List<string>
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId, // "openid"
+                        IdentityServerConstants.StandardScopes.Profile, // "profile"
+                        "api1"
+                    }
+                }
+                ,
                 // JavaScript Client
                 new Client
                 {
