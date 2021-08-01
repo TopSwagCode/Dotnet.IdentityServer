@@ -87,6 +87,8 @@ namespace IdentityServerAspNetIdentity
                 builder.AddSigningCredential(rsa.GetKey(), IdentityServerConstants.RsaSigningAlgorithm.RS512);
             }
 
+            services.AddOidcStateDataFormatterCache();
+            
             services.AddAuthentication()
                 .AddGoogle(options =>
                 {
@@ -97,6 +99,15 @@ namespace IdentityServerAspNetIdentity
                     // set the redirect URI to http://identity:5000/signin-google
                     options.ClientId = Configuration["Identity:Google:ClientId"];
                     options.ClientSecret = Configuration["Identity:Google:ClientSecret"];
+                })
+                .AddOpenIdConnect(options =>
+                {
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.Authority = "https://localhost:5051";
+                    options.ClientId = "IdentityServer";
+                    options.ClientSecret = "secret";
+                    options.ResponseType = "code";
+                    //options.SaveTokens = true;
                 });
 
             services.AddSendGrid(options => // Use whatever email provider you want to. I use SendGrid, because it has a basic free plan to get started with.

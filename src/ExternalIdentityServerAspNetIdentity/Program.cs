@@ -45,6 +45,7 @@ namespace ExternalIdentityServerAspNetIdentity
                     args = args.Except(new[] { "/seed" }).ToArray();
                 }
 
+                //seed = true;
                 var host = CreateHostBuilder(args).Build();
 
                 if (seed)
