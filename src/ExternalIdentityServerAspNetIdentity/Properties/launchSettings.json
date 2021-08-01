@@ -8,7 +8,7 @@
         "ASPNETCORE_Kestrel__Certificates__Default__Path": "../.certs/https/aspnetapp.pfx",
         "ASPNETCORE_Kestrel__Certificates__Default__Password": "Your_password123"
       },
-      "applicationUrl": "https://localhost:5051;http://localhost:5050"
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }
   }
 }

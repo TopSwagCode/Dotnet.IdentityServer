@@ -1,0 +1,38 @@
+@model ExternalIdentityServerAspNetIdentity.Controllers.Account.SignupViewModel
+
+<div class="login-page">
+    <div class="lead">
+        <h1>Signup</h1>
+        <p>Hi and awesome to see you here :) Can't wait to see you join!</p>
+        <p>The way this signup flow works, is we are going to send you a email with a link for creating a user.</p>
+        <p>This is simply to ensure you own the email and other people act like you here. </p>
+        <p>You will be redirected to the page and can wait for the email to come, so you can copy in your email validation token,
+        or simply press the link in the email to get back here when you are ready to finish your user creation.</p>
+    </div>
+
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Local Account</h2>
+                </div>
+
+                <div class="card-body">
+                    <form asp-route="Signup">
+
+                        <div class="form-group">
+                            <input type="hidden" asp-for="Base64ReturnUrl">
+                            <label asp-for="Email"></label>
+                            <input class="form-control" placeholder="Email" asp-for="Email" autofocus>
+                        </div>
+
+                        <button class="btn btn-primary" name="button" value="signup">Signup</button>
+                        <button class="btn btn-secondary" name="button" value="back">Back</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
