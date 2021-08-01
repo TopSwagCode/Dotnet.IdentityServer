@@ -105,3 +105,57 @@ This project would love help! And there is plenty of stuff that needs help on ge
 
 This project is by no mean perfect and getting to be part of the project shouldn't be too hard. There is one simple rule. THE BOY SCOUTS RULE: “Always leave the campground cleaner than you found it.” If you find a mess on the ground, you clean it up regardless of who might have made it. We don't need perfect Pull requests, but we shoulnd't leave the project in a worse state afterwards ;)
 
+# TODO
+
+https://docs.identityserver.io/en/latest/quickstarts/2_interactive_aspnetcore.html
+
+```c#
+public static IEnumerable<Client> Clients =>
+    new List<Client>
+    {
+        // machine to machine client (from quickstart 1)
+        new Client
+        {
+            ClientId = "client",
+            ClientSecrets = { new Secret("secret".Sha256()) },
+            AllowedGrantTypes = GrantTypes.ClientCredentials,
+            // scopes that client has access to
+            AllowedScopes = { "api1" }
+        },
+        // interactive ASP.NET Core MVC client
+        new Client
+        {
+            ClientId = "mvc",
+            ClientSecrets = { new Secret("secret".Sha256()) },
+            AllowedGrantTypes = GrantTypes.Code,
+            // where to redirect to after login
+            RedirectUris = { "https://localhost:5002/signin-oidc" },
+            // where to redirect to after logout
+            PostLogoutRedirectUris = { "https://localhost:5002/signout-callback-oidc" },
+            AllowedScopes = new List<string>
+            {
+                IdentityServerConstants.StandardScopes.OpenId,
+                IdentityServerConstants.StandardScopes.Profile
+            }
+        }
+    };
+```
+
+```c#
+services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = "Cookies";
+        options.DefaultChallengeScheme = "oidc";
+    })
+    .AddCookie("Cookies")
+    .AddOpenIdConnect("oidc", options =>
+    {
+        options.Authority = "https://localhost:5001";
+        options.ClientId = "mvc";
+        options.ClientSecret = "secret";
+        options.ResponseType = "code";
+        options.SaveTokens = true;
+    });
+```
+
+
