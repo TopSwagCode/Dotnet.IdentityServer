@@ -8,9 +8,13 @@ This project goal is to show a basic implementation of IdentityServer for a rang
 
 ![overview.png](assets/overview.png)
 
-In this repository you will find 4 Clients using the IdentityServer. AspNetCore MVC client, a Javascript client, a Blazor WASM client and a Console APP Client. All showing how you can check claims and show roles of the logged in user.
+In this repository you will find 4 Clients using the IdentityServers. AspNetCore MVC client, a Javascript client, a Blazor WASM client and a Console APP Client. All showing how you can check claims and show roles of the logged in user.
 
 There is also included an API that points at IdentityServer as Authority. You could have any number of API's as microservice in your setup. They take the bearer token they receive from the calls and validate it against IdentityServer, that the user has access to whatever resource they are trying to get.
+
+Below you can see gif showing login using the Javascript client. Redirecting to the first IdentityServer, where the user has 3 options to login. Username / Password, Google and External / secondary Identity server. The user uses External identity and get's redirected. Likewise would google login redirect to google login. When the user then login on the External identity server, the user would then be redicted back to the first identity server to verify the login and then redirect back to the javascript client as a logged in user. It should happen so fast, that it seems the user skips the first redirect and gets redirected instant back to the javascript client.
+
+![login flow](assets/openidconnect.gif)
 
 # Setup
 
@@ -104,58 +108,3 @@ This project would love help! And there is plenty of stuff that needs help on ge
 * Bug fixing
 
 This project is by no mean perfect and getting to be part of the project shouldn't be too hard. There is one simple rule. THE BOY SCOUTS RULE: “Always leave the campground cleaner than you found it.” If you find a mess on the ground, you clean it up regardless of who might have made it. We don't need perfect Pull requests, but we shoulnd't leave the project in a worse state afterwards ;)
-
-# TODO
-
-https://docs.identityserver.io/en/latest/quickstarts/2_interactive_aspnetcore.html
-
-```c#
-public static IEnumerable<Client> Clients =>
-    new List<Client>
-    {
-        // machine to machine client (from quickstart 1)
-        new Client
-        {
-            ClientId = "client",
-            ClientSecrets = { new Secret("secret".Sha256()) },
-            AllowedGrantTypes = GrantTypes.ClientCredentials,
-            // scopes that client has access to
-            AllowedScopes = { "api1" }
-        },
-        // interactive ASP.NET Core MVC client
-        new Client
-        {
-            ClientId = "mvc",
-            ClientSecrets = { new Secret("secret".Sha256()) },
-            AllowedGrantTypes = GrantTypes.Code,
-            // where to redirect to after login
-            RedirectUris = { "https://localhost:5002/signin-oidc" },
-            // where to redirect to after logout
-            PostLogoutRedirectUris = { "https://localhost:5002/signout-callback-oidc" },
-            AllowedScopes = new List<string>
-            {
-                IdentityServerConstants.StandardScopes.OpenId,
-                IdentityServerConstants.StandardScopes.Profile
-            }
-        }
-    };
-```
-
-```c#
-services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = "Cookies";
-        options.DefaultChallengeScheme = "oidc";
-    })
-    .AddCookie("Cookies")
-    .AddOpenIdConnect("oidc", options =>
-    {
-        options.Authority = "https://localhost:5001";
-        options.ClientId = "mvc";
-        options.ClientSecret = "secret";
-        options.ResponseType = "code";
-        options.SaveTokens = true;
-    });
-```
-
-
