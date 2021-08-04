@@ -12,10 +12,18 @@ function log() {
     });
 }
 
+document.getElementById("external").addEventListener("click", external, false);
 document.getElementById("login").addEventListener("click", login, false);
 document.getElementById("api").addEventListener("click", api, false);
 document.getElementById("apiAdmin").addEventListener("click", apiAdmin, false);
 document.getElementById("logout").addEventListener("click", logout, false);
+
+function external() {
+    var returnUrl = location.href;
+    var url = "https://localhost:5001/External/Challenge?returnurl=" + returnUrl + "&scheme=OpenIdConnect"
+    location.href = url;
+}
+
 
 var config = {
     authority: "https://localhost:5001",
@@ -71,6 +79,7 @@ function apiAdmin() {
 function logout() {
     mgr.signoutRedirect();
 }
+
 
 // Example POST method implementation:
 async function postData(url = '', data = {}) {

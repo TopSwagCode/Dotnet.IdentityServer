@@ -49,12 +49,15 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
         /// initiate roundtrip to external authentication provider
         /// </summary>
         [HttpGet]
-        public IActionResult Challenge(string scheme, string returnUrl)
+        public async Task<IActionResult> Challenge(string scheme, string returnUrl)
         {
             if (string.IsNullOrEmpty(returnUrl)) returnUrl = "~/";
 
             // validate returnUrl - either it is a valid OIDC URL or back to a local page
-            if (Url.IsLocalUrl(returnUrl) == false && _interaction.IsValidReturnUrl(returnUrl) == false)
+            var isLocalUrl = Url.IsLocalUrl(returnUrl) == false;
+            var isValidUrl = _interaction.IsValidReturnUrl(returnUrl) == false;
+
+            if (isLocalUrl && isValidUrl)
             {
                 // user might have clicked on a malicious link - should be logged
                 throw new Exception("invalid return URL");
