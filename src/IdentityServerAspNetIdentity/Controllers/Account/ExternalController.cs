@@ -85,7 +85,7 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
         public async Task<IActionResult> Callback()
         {
             // read external identity from the temporary cookie
-            var result = await HttpContext.AuthenticateAsync("idsrv.external");//IdentityServerConstants.ExternalCookieAuthenticationScheme);
+            var result = await HttpContext.AuthenticateAsync("OpenIdConnect");//"idsrv.external");//IdentityServerConstants.ExternalCookieAuthenticationScheme);
             if (result?.Succeeded != true)
             {
                 throw new Exception("External authentication error");
@@ -97,6 +97,8 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
                 _logger.LogDebug("External claims: {@claims}", externalClaims);
             }
 
+            
+            
             // lookup our user and external provider info
             var (user, provider, providerUserId, claims) = await FindUserFromExternalProviderAsync(result);
             if (user == null)
@@ -106,6 +108,25 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
                 // simply auto-provisions new external user
                 user = await AutoProvisionUserAsync(provider, providerUserId, claims);
             }
+
+            await _userManager.UpdateAsync(user);
+
+            var existingClaims = _userManager.GetClaimsAsync(user);
+            
+            // TODO Sync claims
+            
+            var givenNameClaim = result.Principal.Claims.FirstOrDefault(x => x.Type == JwtClaimTypes.GivenName);
+            if(givenNameClaim != null)
+                await _userManager.AddClaimAsync(user, givenNameClaim);
+            var nameClaim = result.Principal.Claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Name);
+            if(nameClaim != null)
+                await _userManager.AddClaimAsync(user, nameClaim);
+            var emailClaim = result.Principal.Claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Email);
+            if(emailClaim != null)
+                await _userManager.AddClaimAsync(user, emailClaim);
+            var familyNameClaim = result.Principal.Claims.FirstOrDefault(x => x.Type == JwtClaimTypes.FamilyName);
+            if(familyNameClaim != null)
+                await _userManager.AddClaimAsync(user, familyNameClaim);
 
             // this allows us to collect any additional claims or properties
             // for the specific protocols used and store them in the local auth cookie.
@@ -129,6 +150,8 @@ namespace IdentityServerAspNetIdentity.Controllers.Account
             };
 
             await HttpContext.SignInAsync(isuser, localSignInProps);
+            
+            var info = await _signInManager.GetExternalLoginInfoAsync();
 
             // delete temporary cookie used during external authentication
             await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);

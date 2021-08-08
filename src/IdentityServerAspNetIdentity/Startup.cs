@@ -17,8 +17,13 @@ using IdentityServer4.Models;
 using IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using SendGrid.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.OAuth;
 
 namespace IdentityServerAspNetIdentity
 {
@@ -100,6 +105,7 @@ namespace IdentityServerAspNetIdentity
                     options.ClientId = Configuration["Identity:Google:ClientId"];
                     options.ClientSecret = Configuration["Identity:Google:ClientSecret"];
                 })
+                
                 .AddOpenIdConnect(options =>
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
@@ -107,7 +113,25 @@ namespace IdentityServerAspNetIdentity
                     options.ClientId = "IdentityServer";
                     options.ClientSecret = "secret";
                     options.ResponseType = "code";
-                    //options.SaveTokens = true;
+                    
+                    options.ClaimActions.MapJsonKey(JwtClaimTypes.Email, JwtClaimTypes.Email, "string");
+                    options.ClaimActions.MapJsonKey(JwtClaimTypes.Name, JwtClaimTypes.Name, "string");
+                    options.ClaimActions.MapJsonKey(JwtClaimTypes.GivenName, JwtClaimTypes.GivenName, "string");
+
+                    options.Scope.Add(IdentityServerConstants.StandardScopes.OpenId);
+                    options.Scope.Add(IdentityServerConstants.StandardScopes.Profile);
+                    options.Scope.Add("api1");
+                    //options.Scope.Add(IdentityServerConstants.StandardScopes.Email);
+                    //options.GetClaimsFromUserInfoEndpoint = true;
+                    
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        NameClaimType = "name",
+                        RoleClaimType = "role"
+                    };
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                    options.SaveTokens = true;
+                    
                 });
 
             services.AddSendGrid(options => // Use whatever email provider you want to. I use SendGrid, because it has a basic free plan to get started with.

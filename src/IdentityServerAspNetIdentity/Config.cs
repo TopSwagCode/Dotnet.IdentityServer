@@ -73,7 +73,7 @@ namespace IdentityServerAspNetIdentity
                     ClientName = "JavaScript Client",
                     AllowedGrantTypes = GrantTypes.Code, // admincallback
                     RequireClientSecret = false,
-
+                    
                     RedirectUris =           { "http://localhost:5002/callback.html", "https://localhost:5003/callback.html", "http://localhost:5002/admincallback.html", "https://localhost:5003/admincallback.html" },
                     PostLogoutRedirectUris = { "http://localhost:5002/index.html", "https://localhost:5003/index.html" },
                     AllowedCorsOrigins =     { "http://localhost:5002", "https://localhost:5003" },
