@@ -96,6 +96,7 @@ I have created a github project, where you can keep updated about the progress a
 
 * Currently goal is to release version 1.0.0 of this project with basic user signup / login flow.
 * Next version is planned to be focusing on Admin pages for user / role management.
+* Sonarqube is also planned to be used for code analysis.
 
 # Contributors
 
