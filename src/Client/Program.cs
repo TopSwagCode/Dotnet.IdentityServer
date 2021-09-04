@@ -8,6 +8,11 @@ namespace Client
 {
     class Program
     {
+        protected Program()
+        {
+            // csharpsquid:S1118 - Utility classes should not have public constructors
+        }
+        
         static async Task Main(string[] args)
         {
             await Task.Delay(5000);

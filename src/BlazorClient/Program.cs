@@ -20,6 +20,11 @@ namespace BlazorClient
 {
     public class Program
     {
+        protected Program()
+        {
+            // csharpsquid:S1118 - Utility classes should not have public constructors
+        }
+        
         public static async Task Main(string[] args)
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);

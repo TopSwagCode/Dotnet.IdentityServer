@@ -16,6 +16,11 @@ namespace ExternalIdentityServerAspNetIdentity
 {
     public class Program
     {
+        protected Program()
+        {
+            // csharpsquid:S1118 - Utility classes should not have public constructors
+        }
+        
         public static int Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()

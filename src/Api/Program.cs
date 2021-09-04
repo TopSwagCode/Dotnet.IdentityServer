@@ -11,6 +11,11 @@ namespace Api
 {
     public class Program
     {
+        protected Program()
+        {
+            // csharpsquid:S1118 - Utility classes should not have public constructors
+        }
+        
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
