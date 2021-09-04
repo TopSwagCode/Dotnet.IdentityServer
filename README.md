@@ -100,6 +100,7 @@ I have created a github project, where you can keep updated about the progress a
 * Add build badges to the project.
 * Add unit tests and upgrade quality of code.
 * Trigger build
+* Just do better
 
 # Contributors
 
