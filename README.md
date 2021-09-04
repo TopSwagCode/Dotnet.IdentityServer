@@ -98,6 +98,7 @@ I have created a github project, where you can keep updated about the progress a
 * Next version is planned to be focusing on Admin pages for user / role management.
 * Sonarqube is also planned to be used for code analysis.
 * Add build badges to the project.
+* Add unit tests and upgrade quality of code.
 
 # Contributors
 
