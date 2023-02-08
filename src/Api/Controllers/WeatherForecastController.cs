@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers
 {
-    //TEST
     [ApiController]
     [Route("[controller]")]
     [Authorize]
