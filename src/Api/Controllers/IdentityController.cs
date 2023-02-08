@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
+    // Comment
     [Route("identity")]
     [Authorize]
     [ApiController]
