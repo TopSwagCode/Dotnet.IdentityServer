@@ -23,6 +23,7 @@ namespace Api.Controllers
         [Authorize(Roles = "admin")]
         public IActionResult Admin()
         {
+            // Add comment to start build
             return new JsonResult(from c in User.Claims select new { c.Type, c.Value });
         }
     }
